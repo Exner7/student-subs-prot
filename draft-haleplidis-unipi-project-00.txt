@@ -1,0 +1,784 @@
+
+
+
+
+Education                                                E.H. Haleplidis
+Internet-Draft                                              A.R. Rouskas
+Intended status: Informational                     University of Piraeus
+Expires: 16 November 2023                                    15 May 2023
+
+
+                       Semester project for 2023
+                   draft-haleplidis-unipi-project-00
+
+Abstract
+
+   The purpose of this document is to define in detail the specification
+   of a protocol that you will have to implement exactly as it is
+   specified.  Your report must contain the server and client code.  You
+   will have to present and demonstrate your work and be prepared to
+   describe it in detail.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 16 November 2023.
+
+Copyright Notice
+
+   Copyright (c) 2023 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023                [Page 1]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   3
+   2.  Terminology . . . . . . . . . . . . . . . . . . . . . . . . .   3
+   3.  Protocol Overview . . . . . . . . . . . . . . . . . . . . . .   3
+   4.  Protocol Header Format  . . . . . . . . . . . . . . . . . . .   6
+     4.1.  Subscription Request  . . . . . . . . . . . . . . . . . .   6
+     4.2.  Information Request . . . . . . . . . . . . . . . . . . .   7
+     4.3.  Full Name Header Format . . . . . . . . . . . . . . . . .   8
+     4.4.  Phone Number Header Format  . . . . . . . . . . . . . . .  10
+     4.5.  Address Header Format . . . . . . . . . . . . . . . . . .  10
+     4.6.  Termination Header Request  . . . . . . . . . . . . . . .  12
+   5.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .  13
+   6.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  13
+   7.  Security Considerations . . . . . . . . . . . . . . . . . . .  13
+   8.  Informative References  . . . . . . . . . . . . . . . . . . .  14
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  14
+
+1.  Introduction
+
+   This is a simple protocol that will require a few message exchanges.
+   The purpose of this protocol is for a student (client) to subscribe
+   to the University database.
+
+   This document follows the keyword use as specified in RFC2119
+   [RFC2119].
+
+   The client always initiate the communication to the server and
+   provide his/her identification (AM).  The server will then request
+   sequentially additional information from the student by requesting
+   specific information.
+
+   The AM should remain consistent throughout the interaction between
+   the Client and the Server.  If not, then an error message must be
+   sent as specified in Section 4.6
+
+   In order to simplify and avoid Byte Order, Size, and Alignment
+   issues, please assume that both user and client use the same
+   machine's native format and byte order.
+
+   The server MUST listen at TCP port 54321.
+
+   The order of the information requested by the server MUST be random,
+   but MUST request only once all of the following data:
+
+   *  Full Name
+
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023                [Page 2]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+   *  Corresponding Address
+
+   *  Telephone Number
+
+   Once all this information is requested the server will respond with
+   an "OK" and will terminate the connection.
+
+   To simulate server or communication errors, the server will reject at
+   random with a probability of 35% any message received by the client
+   except the first one.
+
+   The remainder of this document is organized as follows.  Section 2
+   explains the terminology used in this document.  Section 3 provides a
+   high-level overview of the protocol.  Finally, Section 4 provides the
+   details of each protocol header.
+
+1.1.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in RFC2119 [RFC2119].
+
+2.  Terminology
+
+   This document uses the following terms:
+
+      Protocol - A pre-approved communication language between two end
+      systems.
+
+      Server - The part of the communication protocol that receives the
+      request.  In this project the server is an endpoint for a
+      database.
+
+      Client - The part of the communication protocol that starts the
+      request.  In this project the client is a student application that
+      requests subscription to the student's database.
+
+      byte - An 8-bit octet
+
+3.  Protocol Overview
+
+   Figure 1 provides a detailed high-level overview of the message
+   exchange between the server and the client.  Note that the order of
+   the message exchange, except the first and the last ones SHALL be
+   randomized.
+
+
+
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023                [Page 3]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+                        Server                            Client
+                        |                                  |
+                        |     Request Subscription + AM    |
+                        | <------------------------------- |
+                        |                                  |
+                        |   Please provide your Full Name  |
+                        | -------------------------------> |
+                        |                                  |
+                        |       Here is my Full Name       |
+                        | <------------------------------- |
+                        |                                  |
+                        | Please provide your Phone Number |
+                        | -------------------------------> |
+                        |                                  |
+                        |       Here is my Phone Number    |
+                        | <------------------------------- |
+                        |                                  |
+                        |   Please provide your Address    |
+                        | -------------------------------> |
+                        |                                  |
+                        |         Here is my Address       |
+                        | <------------------------------- |
+                        |                                  |
+                        |  All is well - Thank you - Bye   |
+                        | -------------------------------> |
+                        |                                  |
+
+                         Figure 1: Message Exchange
+
+   The server after receiving each answer from the client will check for
+   validity.  For each of these messages the server will check for the
+   following:
+
+   1.  AM - The number must be five digits long.
+
+   2.  Full Name - The client must send two character strings.  One for
+       the First Name and one for the Last Name.  For the sake of
+       simplicity we assume that there is no middle name
+
+   3.  Phone Number - The server must make sure that the number is 10
+       digits.
+
+   4.  Address - The server must validate that all address information
+       is sent.  Postal code, Postal Address and Country.
+
+   When the Client successfully sends the Information requested by the
+   Server, the Server will request the next Information.
+
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023                [Page 4]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+   When the Server successfully receives all the Information then it
+   responds with an OK message.
+
+   In the case of validity issues the server will respond with an error
+   message as per the following example.
+
+                   Server                            Client
+                   |                                  |
+                   |     Request Subscription + AM    |
+                   | <------------------------------- |
+                   |                                  |
+                   |   Please provide your Full Name  |
+                   | -------------------------------> |
+                   |                                  |
+                   |       Here is my Full Name       |
+                   | <------------------------------- |
+                   |                                  |
+                   | Full Name does not contain Name  |
+                   | -------------------------------> |
+                   |                                  |
+                   |  Found Error - Thank you - Bye   |
+                   | -------------------------------> |
+                   |                                  |
+
+                      Figure 2: Error Message Exchange
+
+   To simulate errors, the server MUST implement a 35% probability
+   chance of rejecting the previous message except the Request
+   Subscription.  In this case the server will send a message requesting
+   the previous information.
+
+   The client MUST remember the previous request and resend the same
+   information.  When the server requests a different value the client
+   MUST understand that the previous information was processed
+   correctly.
+
+   Figure 3 provides a detailed high-level overview of the message
+   exchange between the server and the client with a simulated error.
+   Note that the order of the message exchange, except the first and the
+   last ones SHALL be randomized.
+
+
+
+
+
+
+
+
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023                [Page 5]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+                        Server                            Client
+                        |                                  |
+                        |     Request Subscription + AM    |
+                        | <------------------------------- |
+                        |                                  |
+                        |   Please provide your Full Name  |
+                        | -------------------------------> |
+                        |                                  |
+                        |       Here is my Full Name       |
+                        | <------------------------------- |
+                        |                                  |
+                        | Please provide your Phone Number |
+                        | -------------------------------> |
+                        |                                  |
+                        |       Here is my Phone Number    |
+                        | <------------------------------- |
+                        |                                  |
+                        |  Error: resend previous message  |
+                        | -------------------------------> |
+                        |                                  |
+                        |       Here is my Phone Number    |
+                        | <------------------------------- |
+                        |                                  |
+                        |   Please provide your Address    |
+                        | -------------------------------> |
+                        |                                  |
+                        |         Here is my Address       |
+                        | <------------------------------- |
+                        |                                  |
+                        |  All is well - Thank you - Bye   |
+                        | -------------------------------> |
+                        |                                  |
+
+              Figure 3: Message Exchange with simulated error
+
+4.  Protocol Header Format
+
+   The following headers are required in order to satisfy all the
+   requirements
+
+4.1.  Subscription Request
+
+   This is the first message sent by the Client to initiate the
+   subscription process.  The client sends this message along with his/
+   her AM.
+
+   The following figure shows the message format.
+
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023                [Page 6]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        Message Type           |              AM               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                            Length                             |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                Figure 4: Request Subscription Header Format
+
+   *  Message Type - 16 bits unsigned integer: The message type.  For
+      this message, the message type MUST be 0.
+
+   *  AM - 16 bits unsigned integer: The ID of the client.
+
+   *  Length - 32 bits unsigned integer.  The value for this message
+      MUST be 8.
+
+4.2.  Information Request
+
+   This is the common message sent by the Server to request information
+   from the Client.
+
+   The following figure shows the message format.
+
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        Message Type           |      Information Type         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                            Length                             |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                Figure 5: Request Information Header Format
+
+   *  Message Type - 16 bits unsigned integer: The message type.  For
+      this message, the message type MUST be 1.
+
+   *  Information Type - 16 bits unsigned integer.  This value holds the
+      requested information to be sent to the server.
+
+   *  Length - 32 bits unsigned integer.  The value for this message
+      MUST be 8.
+
+   The Information Type will hold all the necessary information for the
+   server to request data from the client.  The client will respond to
+   the server with the information requested.  The following values are
+   expected:
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023                [Page 7]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+   *  0: The server requests from the client to send the Full Name
+
+   *  1: The server requests from the client to send the Phone Number
+
+   *  2: The server requests from the client to send the for Address
+
+   *  3: In case of simulated error, the server will send this value to
+      request a resend of the previous message.
+
+   If the Client receives any other Information Type value it MUST send
+   an error message, as specified in Section 4.6, and then terminate the
+   connection.
+
+4.3.  Full Name Header Format
+
+   This is the message sent by the Client after receiving a request for
+   the Full Name and father's name from the Server.
+
+   The following figure shows the message format.
+
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        Message Type           |              AM               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                            Length                             |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        First Name Length      |          First Name           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                         ..........                            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |             First Name                        |   Padding1    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |         Last Name Length      |           Last Name           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                         ..........                            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |              Last Name                        |   Padding2    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       Father's Name Length    |         Father's Name         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                         ..........                            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |              Last Name                        |   Padding3    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+                     Figure 6: Full Name Header Format
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023                [Page 8]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+   *  Message Type - 16 bits unsigned integer: The message type.  For
+      this message, the message type MUST be 2.
+
+   *  AM - 16 bits unsigned integer: The ID of the client.
+
+   *  Length - 32 bits unsigned integer: The total length of the header
+      in bytes including all paddings.
+
+   *  First Name Length - 16 bits unsigned integer: The length of the
+      First Name without including Padding1.  This is required as the
+      name is a string with no known number of characters.
+
+   *  First Name - varied number of bytes: A string with English
+      characters encoded in utf-8.
+
+   *  Padding1 - varied number of bytes.  Could be 0 bytes, 1 byte, 2
+      bytes or 3 bytes: 0 value.
+
+   *  Last Name Length - 16 bits unsigned integer: The length of the
+      Last Name without including Padding2.  This is required as the
+      name is a string with no known number of characters.
+
+   *  Last Name - varied number of bytes: A string with English
+      characters encoded in utf-8.
+
+   *  Padding2 - varied number of bytes.  Could be 0 bytes, 1 byte, 2
+      bytes or 3 bytes: 0 value.
+
+   *  Father's Name Length - 16 bits unsigned integer: The length of the
+      First Name without including Padding3.  This is required as the
+      name is a string with no known number of characters.
+
+   *  Father's Name - varied number of bytes: A string with English
+      characters encoded in utf-8.
+
+   *  Padding3 - varied number of bytes.  Could be 0 bytes, 1 byte, 2
+      bytes or 3 bytes: 0 value.
+
+   The Client must distinguish the First and Last name.  Padding1,
+   Padding2 and Padding3 are used to provide a 32-bit alignment.
+
+   If the Client does not send the First Name, the Last Name or the
+   Father's Name, or any combination the Server MUST send an error
+   message, as specified in Section 4.6
+
+
+
+
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023                [Page 9]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+4.4.  Phone Number Header Format
+
+   This is the message sent by the Client after receiving a request for
+   the Phone Number from the Server.
+
+   The following figure shows the message format.
+
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        Message Type           |              AM               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                            Length                             |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                          Phone Number                         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                          Phone Number                         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        Phone Number           |      Padding (2 bytes)        |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                    Figure 7: Phone Number Header Format
+
+   *  Message Type - 16 bits unsigned integer: The message type.  For
+      this message, the message type MUST be 3.
+
+   *  AM - 16 bits unsigned integer: The ID of the client.
+
+   *  Length - 32 bits unsigned integer: The total length of the header
+      in bytes without the padding.  The value MUST be 18 but the total
+      length with the padding is 20.
+
+   *  Phone Number - 10 bytes: The phone number of the client as string.
+      MUST be 10 digits and MUST starts with either a 2 or 6.
+
+   *  Padding - 2 bytes: All zeroes.
+
+   The Server must make sure that the phone number is ten digits and
+   starts with a 2 or 6.  If not it should send an error message as
+   specified in Section 4.6.
+
+4.5.  Address Header Format
+
+   This is the message sent by the Client after receiving a request for
+   the Address from the Server.
+
+   The following figure shows the message format.
+
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023               [Page 10]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        Message Type           |              AM               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                            Length                             |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |             TK                |            Padding1           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        Street Length          |             Street            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                         ..........                            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                  Street                       |   Padding2    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |           City Length         |              City             |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                         ..........                            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                   City                        |   Padding3    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                      Figure 8: Address Header Format
+
+   *  Message Type - 16 bits unsigned integer: The message type.  For
+      this message, the message type MUST be 4.
+
+   *  AM - 16 bits unsigned integer: The ID of the client.
+
+   *  Length - 32 bits unsigned integer: The total length of the header
+      in bytes including all values and the padding.
+
+   *  TK - 16 bits: The Postal Office code.
+
+   *  Padding1 - 16 bits: 0 value.
+
+   *  Street Length - 16 bits unsigned integer: The length of the Street
+      without including Padding2.  This is required as the name is a
+      string with no known number of characters.
+
+   *  Street - varied number of bytes: A string with English characters
+      encoded in utf-8.
+
+   *  Padding2 - varied number of bytes.  Could be 0 bytes, 1 byte, 2
+      bytes or 3 bytes: 0 value.
+
+
+
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023               [Page 11]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+   *  City Length - 16 bits unsigned integer: The length of the City
+      without including Padding3.  This is required as the name is a
+      string with no known number of characters.
+
+   *  City - varied number of bytes: A string with English characters
+      encoded in utf-8.
+
+   *  Padding3 - varied number of bytes.  Could be 0 bytes, 1 byte, 2
+      bytes or 3 bytes: 0 value.
+
+   The Client must distinguish the Street and City.  Padding1 is always
+   present and Padding2 and Padding3 are used to provide a 32-bit
+   alignment.
+
+4.6.  Termination Header Request
+
+   This is the notification message sent by either the Server or the
+   client.  It is the last message of any exchange.  Either good or bad.
+
+   This message will be used either to notify that the exchange was
+   successful or that an error occurred.
+
+   The following figure shows the message format.
+
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        Message Type           |      Notification Type        |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                            Length                             |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                    Figure 9: Termination Header Format
+
+   *  Message Type - 16 bits unsigned integer: The message type.  For
+      this message, the message type MUST be 5.
+
+   *  Information Type - 16 bits unsigned integer: The following values
+      are expected.
+
+      -  0 - All went well, the connection is to be terminated.  This
+         notification is sent by the Server if everything is ok.
+
+      -  1 - Error#1 - AM is not consistent.
+
+      -  2 - Error#2 - Unknown Information Type.
+
+      -  3 - Error#3 - Phone Number incorrect.
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023               [Page 12]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+      -  4 - Error#4 - Full Name not present.
+
+      -  5 - Error#5 - Last Name not present.
+
+      -  6 - Error#6 - Father's Name not present.
+
+      -  7 - Error#7 - Both Full and Last Name not present.
+
+      -  8 - Error#8 - Both Full and Father's Name not present.
+
+      -  9 - Error#9 - Both Last and Father's Name not present.
+
+      -  10 - Error#10 - All names not present.
+
+      -  11 - Error#11 - Postal Code missing.
+
+      -  12 - Error#12 - Postal Address missing.
+
+      -  13 - Error#13 - Postal Country missing.
+
+      -  14 - Error#14 - Postal Code and Address missing.
+
+      -  15 - Error#15 - Postal Code and Country missing.
+
+      -  14 - Error#14 - Postal Address and Country missing.
+
+      -  15 - Error#15 - All fields from Postal data is missing.
+
+   *  Length - 32 bits unsigned integer.  The value for this message
+      MUST be 8.
+
+   Once this type of message is received, it should print out the
+   respective message and terminate the connection.
+
+5.  Acknowledgements
+
+   The authors would like to acknowledge all the students who will
+   attempt to implement this specification.
+
+6.  IANA Considerations
+
+   This memo makes no requests to IANA.
+
+7.  Security Considerations
+
+   There is no security in this specification.  This is a prototype and
+   all messages should be sent in cleartext over the wire.
+
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023               [Page 13]
+
+Internet-Draft          Semester project for 2023               May 2023
+
+
+8.  Informative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+Authors' Addresses
+
+   Evangelos Haleplidis
+   University of Piraeus
+   Department of Digital Systems
+   18534 Piraeus
+   Greece
+   Email: ehalep@unipi.gr
+
+
+   Aggelos Rouskas
+   University of Piraeus
+   Department of Digital Systems
+   18534 Piraeus
+   Greece
+   Email: arouskas@unipi.gr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Haleplidis & Rouskas    Expires 16 November 2023               [Page 14]
